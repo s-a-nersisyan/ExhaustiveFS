@@ -374,16 +374,20 @@ class ExhaustiveClassification:
         # Fit classifier with CV search of unknown parameters
         start_time = time.time()
         classifier = self.classifier(random_state=self.random_state, **self.classifier_kwargs)
+        print(f'model took {time.time() - start_time}')
 
+        start_time = time.time()
         splitter = StratifiedKFold(
                 n_splits=self.classifier_CV_folds, 
                 shuffle=True, 
                 random_state=self.random_state
         )
+        print(f'splitter took {time.time() - start_time}')
         scoring = {
             s: make_scorer(self.scoring_functions[s], needs_proba=True if s == "ROC_AUC" else False)
             for s in self.scoring_functions
         }
+        start_time = time.time()
         searcher = GridSearchCV(
             classifier,
             self.classifier_CV_ranges,
@@ -392,13 +396,17 @@ class ExhaustiveClassification:
             refit=False
         )
         searcher.fit(X_train, y_train)
+        print(f'searcher took {time.time() - start_time}')
 
+        start_time = time.time()
         all_params = searcher.cv_results_["params"]
         mean_test_scorings = {s: searcher.cv_results_["mean_test_" + s] for s in self.scoring_functions}
         best_ind = np.argmax(mean_test_scorings[self.main_scoring_function])
         best_params = {param: all_params[best_ind][param] for param in all_params[best_ind]}
+        print(f'best params took {time.time() - start_time}')
 
         # Refit classifier with best parameters
+        start_time = time.time()
         classifier = self.classifier(random_state=self.random_state, **self.classifier_kwargs, **best_params)
         classifier.fit(X_train, y_train)
         print(f'best fit took {time.time() - start_time}')

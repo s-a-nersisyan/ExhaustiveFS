@@ -366,14 +366,17 @@ class ExhaustiveClassification:
         y_train = self.ann.loc[self.ann["Dataset type"] == "Training", "Class"].to_numpy()
 
         # Fit preprocessor and transform training set
+        start_time = time.time()
         if self.preprocessor:
             preprocessor = self.preprocessor(**self.preprocessor_kwargs)
             preprocessor.fit(X_train)
             X_train = preprocessor.transform(X_train)
         else:
             preprocessor = None
+        print(f'preprocessor took {time.time() - start_time}')
 
         # Fit classifier with CV search of unknown parameters
+        start_time = time.time()
         classifier = self.classifier(random_state=self.random_state, **self.classifier_kwargs)
 
         splitter = StratifiedKFold(
@@ -402,6 +405,7 @@ class ExhaustiveClassification:
         # Refit classifier with best parameters
         classifier = self.classifier(random_state=self.random_state, **self.classifier_kwargs, **best_params)
         classifier.fit(X_train, y_train)
+        print(f'best fit took {time.time() - start_time}')
 
         return classifier, best_params, preprocessor
     

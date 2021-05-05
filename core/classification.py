@@ -320,8 +320,12 @@ class ExhaustiveClassification:
         results = []
         for features_subset in feature_subsets:
             features_subset = list(features_subset)
+            start = time.time()
             classifier, best_params, preprocessor = self.fit_classifier(features_subset)
+            print(f'fit_classifier took {time.time() - start} seconds')
+            start = time.time()
             scores, filtration_passed = self.evaluate_classifier(classifier, preprocessor, features_subset)
+            print(f'evaluate took {time.time() - start} seconds')
 
             item = {"Features subset": features_subset, "Best parameters": best_params, "Scores": scores}
             if filtration_passed:

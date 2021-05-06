@@ -33,7 +33,7 @@ class Model:
 
     def get_best_cv_model(
         self,
-        x_train,
+        X_train,
         y_train,
         scoring_functions,
         main_scoring_function,
@@ -73,7 +73,7 @@ class Model:
                 cv=splitter,
                 refit=False
             )
-            searcher.fit(x_train, y_train)
+            searcher.fit(X_train, y_train)
 
             all_params = searcher.cv_results_['params']
             mean_test_scorings = {

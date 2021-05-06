@@ -358,15 +358,15 @@ class ExhaustiveBase(
         """
 
         # Extract training set
-        x_train = self.df.loc[self.ann['Dataset type'] == 'Training', features_subset]
+        X_train = self.df.loc[self.ann['Dataset type'] == 'Training', features_subset]
         y_train = self.ann.loc[self.ann['Dataset type'] == 'Training', self.y_features]
         if self.check_if_model_needs_numpy():
-            x_train, y_train = x_train.to_numpy(), y_train.to_numpy()
+            X_train, y_train = X_train.to_numpy(), y_train.to_numpy()
 
-        x_train = self.preprocess(x_train, is_fit=True)
+        X_train = self.preprocess(X_train, is_fit=True)
 
         model, best_params = self.get_best_cv_model(
-            x_train,
+            X_train,
             y_train,
             scoring_functions=self.scoring_functions,
             main_scoring_function=self.main_scoring_function,
@@ -374,7 +374,7 @@ class ExhaustiveBase(
             cv_folds=self.model_cv_folds,
         )
 
-        model.fit(x_train, y_train)
+        model.fit(X_train, y_train)
 
         return model, best_params
 
@@ -401,20 +401,26 @@ class ExhaustiveBase(
         scores = {}
         filtration_passed = True
         for dataset, dataset_type in self.ann[['Dataset', 'Dataset type']].drop_duplicates().to_numpy():
-            x_test = self.df.loc[self.ann['Dataset'] == dataset, features_subset]
-            y_test = self.ann.loc[self.ann['Dataset'] == dataset, self.y_features]
+            X_test = self.df.loc[
+                (self.ann['Dataset'] == dataset) & (self.ann['Dataset type'] == dataset_type),
+                features_subset,
+            ]
+            y_test = self.ann.loc[
+                (self.ann['Dataset'] == dataset) & (self.ann['Dataset type'] == dataset_type),
+                self.y_features,
+            ]
             if self.check_if_model_needs_numpy():
-                x_test, y_test = x_test.to_numpy(), y_test.to_numpy()
+                X_test, y_test = X_test.to_numpy(), y_test.to_numpy()
 
-            x_test = self.preprocess(x_test)
+            X_test = self.preprocess(X_test)
 
             # Make predictions
-            y_pred = model.predict(x_test)
+            y_pred = model.predict(X_test)
 
             scores[dataset] = {}
             for s in self.scoring_functions:
                 if self.check_if_method_needs_proba(s):
-                    y_score = model.predict_proba(x_test)
+                    y_score = model.predict_proba(X_test)
                     scores[dataset][s] = self.scoring_functions[s](y_test, y_score[:, 1])
                 else:
                     scores[dataset][s] = self.scoring_functions[s](y_test, y_pred)
